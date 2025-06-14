@@ -32,8 +32,8 @@
 
 2. **克隆项目**：
    ```bash
-   git clone https://github.com/your-username/port-forwarding-tool.git
-   cd port-forwarding-tool
+   git clone https://github.com/bcuiwikb/socat_panel
+   cd socat_panel
    ```
 
 3. **安装后端依赖**：
@@ -43,14 +43,16 @@
 
 4. **运行后端**：
    ```bash
-   python backend.py --port-range 1-65535
+   python main.py --port 8080 --port-range 1024-65535
    ```
    用低端口（如 80）需 root：
    ```bash
-   sudo python backend.py --port-range 1-65535
+   sudo python main.py --port 8080 --port-range 1-65535
    ```
+   参数说明`--port`自定义后端端口
+   `--port-range`转发端口范围
 
-5. **运行前端**：
+6. **运行前端**：
    打开 `index.html` 或用静态服务器：
    ```bash
    python -m http.server 8000
