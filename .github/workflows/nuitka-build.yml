@@ -32,7 +32,7 @@ jobs:
           # main.py 是你的入口脚本文件名，根据实际情况修改
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: main-executable
           path: dist/
