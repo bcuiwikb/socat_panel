@@ -473,9 +473,17 @@
                     return backend?.url || '';
                 },
                 portRangeText() {
-                    return this.portRange.min && this.portRange.max
-                        ? `${this.portRange.min}-${this.portRange.max}`
-                        : '未知';
+                    const availablePorts = this.systemInfo.available_ports || [];
+                    const usedPorts = this.systemInfo.used_ports || [];
+                    const allPorts = [...availablePorts, ...usedPorts];
+                    
+                    if (allPorts.length === 0) {
+                        return '未知';
+                    }
+                    
+                    const minPort = Math.min(...allPorts);
+                    const maxPort = Math.max(...allPorts);
+                    return `${minPort}-${maxPort}`;
                 }
             },
             mounted() {
@@ -528,7 +536,6 @@
                         if (code !== 0) throw new Error(message || '加载系统信息失败');
                         this.systemInfo = data;
                         if (data.available_ports.length > 0) {
-                            this.portRange = { min: 1, max: 65535 };
                             this.suggestedPorts = data.available_ports.slice(0, 5);
                         }
                     } catch (error) {
