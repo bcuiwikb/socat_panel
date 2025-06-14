@@ -28,7 +28,7 @@ jobs:
 
       - name: Build executable with Nuitka
         run: |
-          nuitka --standalone --enable-plugin=flask --output-dir=dist main.py
+          nuitka --standalone --output-dir=dist main.py
           # main.py 是你的入口脚本文件名，根据实际情况修改
 
       - name: Upload artifact
