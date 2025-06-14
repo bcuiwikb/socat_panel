@@ -54,19 +54,20 @@ def check_socat_installed():
         logging.critical("未找到 socat 命令，请先安装 socat 工具后再运行程序。")
         exit(1)
 
-def is_valid_port(port):
+def is_valid_port(port, is_source_port=True):
     global ALLOWED_PORT_RANGE
-    if not ALLOWED_PORT_RANGE:
-        return False
     if not (1 <= port <= 65535):
         return False
-    return ALLOWED_PORT_RANGE[0] <= port <= ALLOWED_PORT_RANGE[1]
+    # 仅对本地端口（源端口）应用 ALLOWED_PORT_RANGE 限制
+    if is_source_port and ALLOWED_PORT_RANGE:
+        return ALLOWED_PORT_RANGE[0] <= port <= ALLOWED_PORT_RANGE[1]
+    return True
 
 def is_valid_flask_port(port):
     return 1 <= port <= 65535
 
 def check_port_available(port, protocol='tcp', editing_id=None):
-    if not is_valid_port(port):
+    if not is_valid_port(port, is_source_port=True):
         return False
     proto = protocol.lower()
     with socket.socket(socket.AF_INET,
@@ -109,18 +110,16 @@ def init_db():
                 protocol TEXT DEFAULT 'tcp',
                 status TEXT CHECK(status IN ('running', 'stopped')),
                 expire_minutes INTEGER,
-                remaining_minutes INTEGER,  -- 新增字段，存储剩余时间
+                remaining_minutes INTEGER,
                 create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
                 start_time DATETIME,
                 pid INTEGER
             )
         ''')
-        # 检查是否需要添加 remaining_minutes 字段
         cursor.execute("PRAGMA table_info(forwarding)")
         columns = [col[1] for col in cursor.fetchall()]
         if 'remaining_minutes' not in columns:
             cursor.execute('ALTER TABLE forwarding ADD COLUMN remaining_minutes INTEGER')
-            # 初始化现有规则的 remaining_minutes
             cursor.execute('UPDATE forwarding SET remaining_minutes = expire_minutes WHERE remaining_minutes IS NULL')
         db.commit()
         logging.info(f"数据库初始化完成, 启动时间: {START_TIME}")
@@ -223,15 +222,18 @@ def add_forwarding():
             dest_port = int(data['destination_port'])
         except ValueError:
             return jsonify({'code': 400, 'message': '端口必须为整数'}), 400
-        if not is_valid_port(source_port) or not is_valid_port(dest_port):
-            return jsonify({'code': 400, 'message': f'端口必须在允许的范围内: {ALLOWED_PORT_RANGE[0]}-{ALLOWED_PORT_RANGE[1]}'}), 400
+        # 验证本地端口（受范围限制）和目标端口（仅需1-65535）
+        if not is_valid_port(source_port, is_source_port=True):
+            return jsonify({'code': 400, 'message': f'本地端口必须在允许的范围内: {ALLOWED_PORT_RANGE[0]}-{ALLOWED_PORT_RANGE[1]}'}), 400
+        if not is_valid_port(dest_port, is_source_port=False):
+            return jsonify({'code': 400, 'message': '目标端口必须在1-65535之间'}), 400
         protocol = data.get('protocol', 'tcp').lower()
         if protocol not in ('tcp', 'udp'):
             return jsonify({'code': 400, 'message': '协议仅支持TCP/UDP'}), 400
         editing_id = data.get('editing_id')
         with LOCK:
             if not check_port_available(source_port, protocol, editing_id):
-                return jsonify({'code': 400, 'message': f'源端口 {source_port} 已被占用或不在可用范围内'}), 400
+                return jsonify({'code': 400, 'message': f'本地端口 {source_port} 已被占用或不在可用范围内'}), 400
             db = get_db()
             if db.execute('SELECT id FROM forwarding WHERE id=?', (data['id'],)).fetchone():
                 return jsonify({'code': 400, 'message': 'ID已存在'}), 400
@@ -286,11 +288,10 @@ def update_forward_status(fid, status):
     try:
         if status == 'running':
             if not check_port_available(sport, proto, fid):
-                return jsonify({'code': 400, 'message': f'源端口 {sport} 已被占用或不在可用范围内，无法启动'}), 400
+                return jsonify({'code': 400, 'message': f'本地端口 {sport} 已被占用或不在可用范围内，无法启动'}), 400
             if pid:
                 kill_process_tree(pid)
             new_pid = start_socat(sport, dest, dport, proto)
-            # 使用保存的 remaining_minutes
             db.execute('''
                 UPDATE forwarding SET 
                 status=?, pid=?, start_time=datetime('now')
@@ -299,7 +300,6 @@ def update_forward_status(fid, status):
         else:  # stopped
             if pid:
                 kill_process_tree(pid)
-            # 计算并保存剩余时间
             if expire_minutes > 0 and start_time:
                 try:
                     start_dt = datetime.strptime(start_time, '%Y-%m-%d %H:%M:%S')
