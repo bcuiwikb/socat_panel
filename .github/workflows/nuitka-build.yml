@@ -1,0 +1,38 @@
+name: Nuitka Build
+
+on:
+  push:
+    branches:
+      - main  # 或者你使用的分支名称
+  workflow_dispatch:  # 允许手动触发
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04  # 使用较旧的 Ubuntu 版本以兼容低版本服务器
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.8  # 使用较旧的 Python 版本以兼容低版本服务器
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc  # 安装编译器
+          pip install -r requirements.txt  # 安装项目依赖
+          pip install nuitka  # 安装 Nuitka
+
+      - name: Build executable with Nuitka
+        run: |
+          nuitka --standalone --enable-plugin=pysqlite --enable-plugin=flask --output-dir=dist main.py
+          # main.py 是你的入口脚本文件名，根据实际情况修改
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: main-executable
+          path: dist/
