@@ -93,9 +93,5 @@ port-forwarding-tool/
 
 欢迎提 issue 或 PR！Fork 项目，创建分支，提交更改即可。
 
-## 许可证 📜
-
-MIT License © 2025 bcuiwikb
-
 ---
 反馈请提 issue 或联系 jwbb903@gmail.com 📧
