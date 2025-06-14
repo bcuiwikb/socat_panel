@@ -85,7 +85,7 @@
 
 ```
 port-forwarding-tool/
-├── backend.py     # 后端 Flask 应用
+├── main.py     # 后端 Flask 应用
 ├── index.html     # 前端页面
 ├── forward.db     # SQLite 数据库（运行时生成）
 └── README.md      # 说明文档
