@@ -3,7 +3,7 @@ name: Build
 on:
   push:
     branches:
-      - main  # 或你使用的分支
+      - main  # 或你使用的主分支
   workflow_dispatch:  # 支持手动触发
 
 jobs:
@@ -29,20 +29,20 @@ jobs:
       - name: Build executable with PyInstaller
         run: |
           pyinstaller --onefile --distpath dist main.py
+          # 根据你的入口文件调整 main.py
 
-      - name: Create Release
-        id: create_release
+      - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           name: "Auto Release - ${{ github.run_number }}"
           tag_name: "v${{ github.run_number }}"
           generate_release_notes: true
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
 
       - name: Upload binary to Release
         uses: softprops/action-gh-release@v2
         with:
-          files: dist/main
+          files: dist/main  # 可根据需要更换目标文件路径
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
