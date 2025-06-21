@@ -4,465 +4,355 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>端口转发管理</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss/dist/tailwind.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css">
-    <script src="https://unpkg.com/vue/dist/vue.global.prod.js"></script>
-    <script src="https://unpkg.com/element-plus/dist/index.full.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/element-plus@2.4.4/dist/index.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+    <script src="https://unpkg.com/vue@3.4.21/dist/vue.global.prod.js"></script>
+    <script src="https://unpkg.com/element-plus@2.4.4/dist/index.full.min.js"></script>
     <style>
-        .transition-collapse {
-            transition: all 0.3s ease;
+        /* 暗黑模式样式 */
+        .dark .bg-gray-100 { background-color: #1a202c !important; }
+        .dark .bg-white { background-color: #2d3748 !important; }
+        .dark .bg-gray-50 { background-color: #4a5568 !important; }
+        .dark .text-gray-800 { color: #f7fafc !important; }
+        .dark .text-gray-600 { color: #a0aec0 !important; }
+        .dark .border-gray-200 { border-color: #4a5568 !important; }
+        .dark .el-input__inner, .dark .el-input-number { background-color: #2d3748 !important; color: #f7fafc !important; }
+        .dark .el-select .el-input__inner { background-color: #2d3748 !important; }
+        .dark .el-dialog { background-color: #2d3748 !important; }
+        .dark .el-dialog__title { color: #f7fafc !important; }
+        .dark .el-form-item__label { color: #a0aec0 !important; }
+
+        /* 全局动画时长优化 */
+        .animate__animated {
+            animation-duration: 0.4s;
         }
-        .collapse-enter, .collapse-leave-to {
+
+        /* 规则列表字体大小调整 (已优化) */
+        .rule-item { font-size: 0.875rem; }
+        .rule-item .font-medium { font-size: 0.95rem; }
+
+        /* 精美的进度条和气泡 */
+        .progress-container {
+            width: 100%;
+            background-color: #e5e7eb;
+            border-radius: 999px;
+            overflow: hidden;
+            position: relative;
+            height: 18px;
+        }
+        .dark .progress-container {
+            background-color: #4b5563;
+        }
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #3b82f6, #60a5fa);
+            transition: width 0.5s ease-in-out;
+            position: relative;
+            overflow: hidden; /* 关键：将气泡限制在内部 */
+            border-radius: 999px;
+        }
+        .dark .progress-bar {
+            background: linear-gradient(90deg, #60a5fa, #93c5fd);
+        }
+        
+        /* 进度条流动光效 */
+        .progress-bar::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(45deg, rgba(255, 255, 255, 0.15) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, 0.15) 50%, rgba(255, 255, 255, 0.15) 75%, transparent 75%, transparent);
+            background-size: 40px 40px;
+            animation: move 2s linear infinite;
+        }
+        @keyframes move {
+            0% { background-position: 0 0; }
+            100% { background-position: 40px 40px; }
+        }
+
+        /* 精致的气泡动画 */
+        .bubble {
+            position: absolute;
+            bottom: -20px; /* 从进度条下方开始 */
+            width: 12px;
+            height: 12px;
+            background-color: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
             opacity: 0;
-            transform: translateY(-10px);
+            animation: bubble-rise 4s infinite ease-in;
         }
-        .port-suggestion:hover {
-            text-decoration: underline;
+        @keyframes bubble-rise {
+            0% {
+                transform: translateY(0) translateX(0);
+                opacity: 0;
+            }
+            20% { opacity: 1; }
+            100% {
+                transform: translateY(-60px) translateX(var(--sway, 15px));
+                opacity: 0;
+            }
         }
-        .el-dialog {
-            border-radius: 8px !important;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1) !important;
+        .bubble:nth-child(2) { animation-delay: 1.5s; --sway: -10px; }
+        .bubble:nth-child(3) { animation-delay: 0.8s; --sway: 10px; }
+
+        /* 展开/收起箭头动画 */
+        .arrow-icon { transition: transform 0.3s ease; }
+        .arrow-icon.expanded { transform: rotate(180deg); }
+
+        /* 壁纸和毛玻璃效果 */
+        body {
+            background-image: url('https://www.loliapi.com/acg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            transition: background-image 0.5s ease-in-out;
         }
-        .el-button {
-            border-radius: 6px !important;
-            font-size: 14px !important;
+        .glass-effect {
+            backdrop-filter: blur(12px) saturate(150%);
+            background-color: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
-        .el-input__inner, .el-select .el-input__inner {
-            border-radius: 6px !important;
+        .dark .glass-effect {
+            background-color: rgba(26, 32, 44, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
-        .el-form-item__label {
-            font-size: 14px !important;
-            color: #374151 !important;
+
+        /* 去除点击时的蓝色框框 */
+        *:focus { outline: none !important; }
+
+        /* 电脑访问时左右布局 */
+        @media (min-width: 768px) {
+            .layout-container { display: flex; gap: 1.5rem; }
+            .status-section { flex: 1; max-width: 50%; }
+            .rules-section { flex: 1; max-width: 50%; }
         }
+
+        /* 美化对话框和按钮 */
+        .el-dialog { border-radius: 12px !important; }
+        .el-button { transition: all 0.3s ease; }
+        .el-button:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
     </style>
 </head>
-<body class="bg-gray-100 font-sans antialiased">
-    <div id="app" class="max-w-5xl mx-auto p-4">
-        <div class="bg-white rounded-lg shadow-md p-6">
-            <!-- 后端管理 -->
-            <div class="mb-6 p-4 bg-gray-50 rounded-md">
+<body class="bg-gray-100 font-sans antialiased" :class="{ 'dark': isDarkMode }">
+    <div id="app" class="max-w-5xl mx-auto p-4 sm:p-6">
+        <div class="rounded-lg shadow-xl p-6 glass-effect">
+            <div class="flex justify-end mb-4">
                 <button 
-                    class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 text-sm mr-2"
+                    class="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-3 py-1 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 text-sm transition-all"
+                    @click="toggleDarkMode"
+                >
+                    <i :class="isDarkMode ? 'fas fa-sun' : 'fas fa-moon'"></i>
+                    {{ isDarkMode ? '白天模式' : '黑暗模式' }}
+                </button>
+            </div>
+
+            <div class="mb-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-md glass-effect">
+                <button 
+                    class="bg-indigo-500 text-white px-4 py-2 rounded-md hover:bg-indigo-600 text-sm mr-2 transition-all"
                     @click="showBackendDialog"
                     :disabled="loading"
                 >
-                    管理后端
+                    <i class="fas fa-server"></i> 管理后端
                 </button>
-                <el-select 
-                    v-model="currentBackend" 
-                    @change="loadData"
-                    placeholder="选择后端"
-                    class="w-full mt-2"
-                    :disabled="loading"
-                >
-                    <el-option
-                        v-for="backend in backends"
-                        :key="backend.name"
-                        :label="`${backend.name} (${backend.url})`"
-                        :value="backend.name"
-                    />
+                <el-select v-model="currentBackend" @change="loadData" placeholder="选择后端" class="w-full mt-2" :disabled="loading">
+                    <el-option v-for="backend in backends" :key="backend.name" :label="`${backend.name} (${backend.url})`" :value="backend.name" />
                 </el-select>
             </div>
 
-            <!-- 系统状态 -->
-            <div class="mb-6 p-4 bg-gray-50 rounded-md cursor-pointer">
-                <div 
-                    class="flex justify-between items-center"
-                    @click="systemInfoExpanded = !systemInfoExpanded"
-                >
-                    <h4 class="text-lg font-semibold text-gray-800">系统状态</h4>
-                    <el-tooltip :content="systemInfoExpanded ? '收起' : '展开'" placement="top">
-                        <i :class="systemInfoExpanded ? 'el-icon-arrow-up' : 'el-icon-arrow-down'" class="text-gray-600"></i>
-                    </el-tooltip>
-                </div>
-                <transition name="collapse">
-                    <div v-show="systemInfoExpanded" class="mt-4">
-                        <p class="text-sm text-gray-600">转发规则数量: {{ systemInfo.total_forwardings }}</p>
-                        <p class="text-sm text-gray-600">CPU 使用率: {{ systemInfo.cpu_usage }}%</p>
-                        <p class="text-sm text-gray-600">内存使用率: {{ systemInfo.mem_usage }}%</p>
-                        <p class="text-sm text-gray-600">已用端口: {{ systemInfo.used_ports.join(', ') }}</p>
-                        <p class="text-sm text-gray-600">允许端口范围: {{ portRangeText }}</p>
-                        <div class="flex items-center mt-4 space-x-2" @click.stop>
-                            <el-input-number
-                                v-model="searchPort"
-                                :min="1"
-                                :max="65535"
-                                placeholder="输入端口号"
-                                size="small"
-                                class="w-36"
-                            ></el-input-number>
-                            <button 
-                                class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 text-sm"
-                                @click="checkPort"
-                                :disabled="portSearchLoading"
-                            >
-                                {{ portSearchLoading ? '检查中...' : '检查端口' }}
-                            </button>
-                        </div>
-                        <div class="mt-2 text-sm" v-if="portSearchResult">
-                            <span :class="portSearchResult.available ? 'text-green-600' : 'text-red-600'">
-                                {{ portSearchResult.message }}
-                            </span>
-                        </div>
+            <div class="layout-container">
+                <div class="status-section mb-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-md glass-effect cursor-pointer">
+                    <div class="flex justify-between items-center" @click="systemInfoExpanded = !systemInfoExpanded">
+                        <h4 class="text-lg font-semibold text-gray-800 dark:text-gray-200">系统状态</h4>
+                        <el-tooltip :content="systemInfoExpanded ? '收起' : '展开'" placement="top">
+                            <i :class="['fas fa-chevron-down arrow-icon', { 'expanded': systemInfoExpanded }]" class="text-gray-600 dark:text-gray-400"></i>
+                        </el-tooltip>
                     </div>
-                </transition>
-            </div>
-
-            <!-- 主功能区 -->
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-xl font-semibold text-gray-800">端口转发规则</h3>
-                <button 
-                    class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 text-sm"
-                    @click="showAddDialog"
-                    :disabled="loading"
-                >
-                    新建规则
-                </button>
-            </div>
-
-            <!-- 规则列表 -->
-            <div v-if="loading" class="animate-pulse space-y-4">
-                <div v-for="n in 5" :key="n" class="h-20 bg-gray-200 rounded-md"></div>
-            </div>
-            <div v-else-if="!rules.length" class="text-center text-gray-500 py-8">
-                暂无规则
-            </div>
-            <div v-else class="space-y-4">
-                <div 
-                    v-for="rule in rules" 
-                    :key="rule.id" 
-                    class="bg-white border border-gray-200 rounded-md p-4 shadow-sm hover:shadow-md transition-shadow"
-                >
-                    <div 
-                        class="flex justify-between items-center cursor-pointer"
-                        @click="rule.isExpanded = !rule.isExpanded"
-                    >
-                        <div class="flex items-center space-x-2">
-                            <span class="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
-                                {{ rule.protocol.toUpperCase() }}
-                            </span>
-                            <span class="font-medium text-gray-800">{{ rule.id }}</span>
-                        </div>
-                        <i :class="rule.isExpanded ? 'el-icon-arrow-up' : 'el-icon-arrow-down'" class="text-gray-600"></i>
-                    </div>
-                    <transition name="collapse">
-                        <div v-show="rule.isExpanded" class="mt-4">
-                            <p class="text-sm text-gray-600">
-                                {{ rule.source_port }} → {{ rule.destination }}:{{ rule.destination_port }}
-                            </p>
-                            <div class="flex justify-between items-center mt-4">
-                                <div class="flex items-center space-x-2">
-                                    <span 
-                                        :class="rule.status === 'running' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'"
-                                        class="text-xs px-2 py-1 rounded"
-                                    >
-                                        {{ rule.status === 'running' ? '运行中' : '已停止' }}
-                                    </span>
-                                    <span v-if="rule.expire_minutes > 0" class="text-xs text-gray-500">
-                                        剩余 {{ rule.remaining_minutes }} 分钟
-                                    </span>
-                                </div>
-                                <div class="flex space-x-2">
-                                    <button 
-                                        v-if="rule.status === 'running'"
-                                        class="bg-yellow-500 text-white px-3 py-1 rounded-md hover:bg-yellow-600 text-sm"
-                                        @click="toggleRule(rule, 'stop')"
-                                        :disabled="rule.loading"
-                                    >
-                                        {{ rule.loading ? '处理中...' : '停止' }}
-                                    </button>
-                                    <button 
-                                        v-else
-                                        class="bg-green-500 text-white px-3 py-1 rounded-md hover:bg-green-600 text-sm"
-                                        @click="toggleRule(rule, 'start')"
-                                        :disabled="rule.loading"
-                                    >
-                                        {{ rule.loading ? '处理中...' : '启动' }}
-                                    </button>
-                                    <button 
-                                        class="bg-blue-500 text-white px-3 py-1 rounded-md hover:bg-blue-600 text-sm"
-                                        @click="showEditDialog(rule)"
-                                    >
-                                        修改
-                                    </button>
-                                    <button 
-                                        class="bg-red-500 text-white px-3 py-1 rounded-md hover:bg-red-600 text-sm"
-                                        @click="deleteRule(rule.id)"
-                                        :disabled="rule.loading"
-                                    >
-                                        {{ rule.loading ? '处理中...' : '删除' }}
-                                    </button>
+                    <el-collapse-transition>
+                        <div v-show="systemInfoExpanded" class="mt-4">
+                            <p class="text-sm text-gray-600 dark:text-gray-300">转发规则数量: {{ systemInfo.total_forwardings }}</p>
+                            <div class="mt-2">
+                                <p class="text-sm text-gray-600 dark:text-gray-300">CPU: {{ systemInfo.cpu_usage }}%</p>
+                                <div class="progress-container">
+                                    <div class="progress-bar" :style="{ width: systemInfo.cpu_usage + '%' }">
+                                        <div class="bubble"></div><div class="bubble"></div><div class="bubble"></div>
+                                    </div>
                                 </div>
                             </div>
+                            <div class="mt-2">
+                                <p class="text-sm text-gray-600 dark:text-gray-300">内存: {{ systemInfo.mem_usage }}%</p>
+                                <div class="progress-container">
+                                    <div class="progress-bar" :style="{ width: systemInfo.mem_usage + '%' }">
+                                        <div class="bubble"></div><div class="bubble"></div><div class="bubble"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mt-2">
+                                <p class="text-sm text-gray-600 dark:text-gray-300">端口使用率: {{ systemInfo.port_usage }}%</p>
+                                <div class="progress-container">
+                                    <div class="progress-bar" :style="{ width: systemInfo.port_usage + '%' }">
+                                        <div class="bubble"></div><div class="bubble"></div><div class="bubble"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <p class="text-sm text-gray-600 dark:text-gray-300 mt-2">允许端口范围: {{ portRangeText }}</p>
                         </div>
-                    </transition>
+                    </el-collapse-transition>
+                </div>
+
+                <div class="rules-section">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-xl font-semibold text-gray-800 dark:text-gray-200">端口转发规则</h3>
+                        <button class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 text-sm transition-all" @click="showAddDialog" :disabled="loading">
+                            <i class="fas fa-plus"></i> 新建规则
+                        </button>
+                    </div>
+
+                    <div v-if="loading" class="animate-pulse space-y-4">
+                        <div v-for="n in 3" :key="n" class="h-24 bg-gray-200 dark:bg-gray-600 rounded-md"></div>
+                    </div>
+                    <div v-else-if="!rules.length" class="text-center text-gray-500 dark:text-gray-400 py-8">暂无规则</div>
+                    <div v-else class="space-y-4">
+                        <div v-for="rule in rules" :key="rule.id" class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md p-4 shadow-sm hover:shadow-lg transition-all duration-300 rule-item glass-effect">
+                            <div class="flex justify-between items-center cursor-pointer" @click="rule.isExpanded = !rule.isExpanded">
+                                <div class="flex items-center space-x-3">
+                                    <span class="inline-block bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs font-bold px-2 py-1 rounded">
+                                        {{ rule.protocol.toUpperCase() }}
+                                    </span>
+                                    <span class="font-medium text-gray-800 dark:text-gray-200">{{ rule.id }}</span>
+                                </div>
+                                <i :class="['fas fa-chevron-down arrow-icon', { 'expanded': rule.isExpanded }]" class="text-gray-600 dark:text-gray-400"></i>
+                            </div>
+                            <el-collapse-transition>
+                                <div v-show="rule.isExpanded" class="mt-4">
+                                    <p class="text-sm text-gray-600 dark:text-gray-300">
+                                        <i class="fas fa-network-wired text-gray-400"></i> {{ rule.source_port }} → <i class="fas fa-globe text-gray-400"></i> {{ rule.destination }}:{{ rule.destination_port }}
+                                    </p>
+                                    <div class="flex justify-between items-center mt-4">
+                                        <div class="flex items-center space-x-2">
+                                            <span :class="rule.status === 'running' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'" class="text-xs px-2 py-1 rounded">
+                                                <i :class="rule.status === 'running' ? 'fas fa-check-circle' : 'fas fa-times-circle'"></i>
+                                                {{ rule.status === 'running' ? '运行中' : '已停止' }}
+                                            </span>
+                                            <span v-if="rule.expire_minutes > 0" class="text-xs text-gray-500 dark:text-gray-400">
+                                                <i class="far fa-clock"></i> 剩余 {{ rule.remaining_minutes }} 分钟
+                                            </span>
+                                        </div>
+                                        <div class="flex space-x-2">
+                                            <button v-if="rule.status === 'running'" class="bg-yellow-500 text-white px-2 py-1 rounded-md hover:bg-yellow-600 text-xs transition-all" @click.stop="toggleRule(rule, 'stop')" :disabled="rule.loading"><i class="fas fa-stop"></i> {{ rule.loading ? '' : '停止' }}</button>
+                                            <button v-else class="bg-green-500 text-white px-2 py-1 rounded-md hover:bg-green-600 text-xs transition-all" @click.stop="toggleRule(rule, 'start')" :disabled="rule.loading"><i class="fas fa-play"></i> {{ rule.loading ? '' : '启动' }}</button>
+                                            <button class="bg-blue-500 text-white px-2 py-1 rounded-md hover:bg-blue-600 text-xs transition-all" @click.stop="showEditDialog(rule)"><i class="fas fa-edit"></i> 修改</button>
+                                            <button class="bg-red-500 text-white px-2 py-1 rounded-md hover:bg-red-600 text-xs transition-all" @click.stop="deleteRule(rule.id)" :disabled="rule.loading"><i class="fas fa-trash"></i> 删除</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </el-collapse-transition>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <!-- 添加规则对话框 -->
-            <el-dialog v-model="addDialogVisible" title="添加新规则" width="90%" class="max-w-lg">
-                <el-form :model="newRule" label-width="80px" :rules="formRules" ref="addForm">
-                    <el-form-item label="规则ID" prop="id">
-                        <el-input v-model="newRule.id" placeholder="中文/英文/数字/_/-" clearable></el-input>
-                    </el-form-item>
+            <el-dialog v-model="formDialogVisible" :title="formTitle" width="min(90vw, 500px)" align-center>
+                <el-form :model="currentRule" label-width="80px" :rules="formRules" ref="ruleForm">
+                    <el-form-item label="规则ID" prop="id"><el-input v-model="currentRule.id" placeholder="中文/英文/数字/_/-" clearable></el-input></el-form-item>
                     <el-form-item label="协议" prop="protocol">
-                        <el-select v-model="newRule.protocol" class="w-full">
-                            <el-option label="TCP" value="tcp" />
-                            <el-option label="UDP" value="udp" />
+                        <el-select v-model="currentRule.protocol" class="w-full">
+                            <el-option label="TCP" value="tcp" /><el-option label="UDP" value="udp" />
                         </el-select>
                     </el-form-item>
                     <el-form-item label="本地端口" prop="source_port">
-                        <el-input-number 
-                            v-model="newRule.source_port"
-                            :min="1"
-                            :max="65535"
+                        <el-autocomplete
+                            v-model="currentRule.source_port"
+                            :fetch-suggestions="querySearchPorts"
+                            placeholder="输入并搜索可用端口"
                             class="w-full"
-                            @change="checkFormPort('newRule')"
-                        ></el-input-number>
-                        <div class="mt-1 text-sm" v-if="newRulePortStatus">
-                            <span :class="newRulePortStatus.available ? 'text-green-600' : 'text-red-600'">
-                                {{ newRulePortStatus.message }}
-                            </span>
-                        </div>
-                        <div class="mt-1 text-sm text-gray-600" v-if="suggestedPorts.length">
-                            建议端口：
-                            <span 
-                                v-for="port in suggestedPorts" 
-                                :key="port" 
-                                class="port-suggestion text-blue-600 cursor-pointer mr-2"
-                                @click="newRule.source_port = port; checkFormPort('newRule')"
-                            >
-                                {{ port }}
-                            </span>
+                            clearable
+                            @select="handlePortSelect"
+                            @change="debouncedCheckFormPort"
+                        />
+                        <div class="mt-1 text-sm" v-if="portStatus">
+                            <span :class="portStatus.available ? 'text-green-600' : 'text-red-600'">{{ portStatus.message }}</span>
                         </div>
                     </el-form-item>
-                    <el-form-item label="目标地址" prop="destination">
-                        <el-input v-model="newRule.destination" placeholder="域名或IP"></el-input>
-                    </el-form-item>
-                    <el-form-item label="目标端口" prop="destination_port">
-                        <el-input-number 
-                            v-model="newRule.destination_port"
-                            :min="1"
-                            :max="65535"
-                            class="w-full"
-                        ></el-input-number>
-                    </el-form-item>
+                    <el-form-item label="目标地址" prop="destination"><el-input v-model="currentRule.destination" placeholder="域名或IP"></el-input></el-form-item>
+                    <el-form-item label="目标端口" prop="destination_port"><el-input-number v-model="currentRule.destination_port" :min="1" :max="65535" class="w-full"></el-input-number></el-form-item>
                     <el-form-item label="有效期" prop="expire_minutes">
-                        <el-input-number
-                            v-model="newRule.expire_minutes"
-                            :min="0"
-                            placeholder="0为永久"
-                            class="w-full"
-                        ></el-input-number>
-                        <div class="text-xs text-gray-500 mt-1">单位：分钟</div>
+                        <el-input-number v-model="currentRule.expire_minutes" :min="0" placeholder="0为永久" class="w-full"></el-input-number>
+                        <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">单位：分钟</div>
                     </el-form-item>
                 </el-form>
                 <template #footer>
-                    <button 
-                        class="bg-gray-300 text-gray-800 px-4 py-2 rounded-md hover:bg-gray-400 mr-2"
-                        @click="addDialogVisible = false"
-                    >
-                        取消
-                    </button>
-                    <button 
-                        class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
-                        @click="addRule"
-                        :disabled="formLoading"
-                    >
-                        {{ formLoading ? '提交中...' : '确认' }}
+                    <button class="bg-gray-300 dark:bg-gray-600 text-gray-800 dark:text-gray-200 px-4 py-2 rounded-md hover:bg-gray-400 dark:hover:bg-gray-500 mr-2 transition-all" @click="formDialogVisible = false">取消</button>
+                    <button class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-all" @click="submitRule" :disabled="formLoading">
+                        <i class="fas fa-spinner fa-spin" v-if="formLoading"></i> {{ formLoading ? '提交中...' : '确认' }}
                     </button>
                 </template>
             </el-dialog>
 
-            <!-- 修改规则对话框 -->
-            <el-dialog v-model="editDialogVisible" title="修改规则" width="90%" class="max-w-lg">
-                <el-form :model="editRule" label-width="80px" :rules="formRules" ref="editForm">
-                    <el-form-item label="规则ID" prop="id">
-                        <el-input v-model="editRule.id" placeholder="中文/英文/数字/_/-" clearable></el-input>
-                    </el-form-item>
-                    <el-form-item label="协议" prop="protocol">
-                        <el-select v-model="editRule.protocol" class="w-full">
-                            <el-option label="TCP" value="tcp" />
-                            <el-option label="UDP" value="udp" />
-                        </el-select>
-                    </el-form-item>
-                    <el-form-item label="本地端口" prop="source_port">
-                        <el-input-number 
-                            v-model="editRule.source_port"
-                            :min="1"
-                            :max="65535"
-                            class="w-full"
-                            @change="checkFormPort('editRule')"
-                        ></el-input-number>
-                        <div class="mt-1 text-sm" v-if="editRulePortStatus">
-                            <span :class="editRulePortStatus.available ? 'text-green-600' : 'text-red-600'">
-                                {{ editRulePortStatus.message }}
-                            </span>
-                        </div>
-                        <div class="mt-1 text-sm text-gray-600" v-if="suggestedPorts.length">
-                            建议端口：
-                            <span 
-                                v-for="port in suggestedPorts" 
-                                :key="port" 
-                                class="port-suggestion text-blue-600 cursor-pointer mr-2"
-                                @click="editRule.source_port = port; checkFormPort('editRule')"
-                            >
-                                {{ port }}
-                            </span>
-                        </div>
-                    </el-form-item>
-                    <el-form-item label="目标地址" prop="destination">
-                        <el-input v-model="editRule.destination" placeholder="域名或IP"></el-input>
-                    </el-form-item>
-                    <el-form-item label="目标端口" prop="destination_port">
-                        <el-input-number 
-                            v-model="editRule.destination_port"
-                            :min="1"
-                            :max="65535"
-                            class="w-full"
-                        ></el-input-number>
-                    </el-form-item>
-                    <el-form-item label="有效期" prop="expire_minutes">
-                        <el-input-number
-                            v-model="editRule.expire_minutes"
-                            :min="0"
-                            placeholder="0为永久"
-                            class="w-full"
-                        ></el-input-number>
-                        <div class="text-xs text-gray-500 mt-1">单位：分钟</div>
-                    </el-form-item>
-                </el-form>
-                <template #footer>
-                    <button 
-                        class="bg-gray-300 text-gray-800 px-4 py-2 rounded-md hover:bg-gray-400 mr-2"
-                        @click="editDialogVisible = false"
-                    >
-                        取消
-                    </button>
-                    <button 
-                        class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
-                        @click="saveEditRule"
-                        :disabled="formLoading"
-                    >
-                        {{ formLoading ? '保存中...' : '保存' }}
-                    </button>
-                </template>
-            </el-dialog>
-
-            <!-- 后端管理对话框 -->
-            <el-dialog v-model="backendDialogVisible" title="后端管理" width="90%" class="max-w-xl">
-                <div v-for="(backend, index) in backends" :key="index" class="flex items-center space-x-2 mb-4">
+            <el-dialog v-model="backendDialogVisible" title="后端管理" width="min(90vw, 600px)" align-center>
+                <div v-for="(backend, index) in tempBackends" :key="index" class="flex items-center space-x-2 mb-4">
                     <el-input v-model="backend.name" placeholder="名称" class="flex-1"></el-input>
-                    <el-input v-model="backend.url" placeholder="API地址" class="flex-1"></el-input>
-                    <button 
-                        class="bg-red-500 text-white w-8 h-8 rounded-full flex items-center justify-center hover:bg-red-600"
-                        @click="removeBackend(index)"
-                    >
-                        <i class="el-icon-delete"></i>
-                    </button>
+                    <el-input v-model="backend.url" placeholder="API地址 (例: http://localhost:2017)" class="flex-1"></el-input>
+                    <button class="bg-red-500 text-white w-8 h-8 rounded-full flex items-center justify-center hover:bg-red-600 transition-all" @click="removeBackend(index)"><i class="fas fa-trash"></i></button>
                 </div>
-                <button 
-                    class="bg-blue-500 text-white w-full py-2 rounded-md hover:bg-blue-600"
-                    @click="addBackendField"
-                >
-                    添加新后端
-                </button>
+                <button class="bg-blue-500 text-white w-full py-2 rounded-md hover:bg-blue-600 transition-all" @click="addBackendField"><i class="fas fa-plus"></i> 添加新后端</button>
                 <template #footer>
-                    <button 
-                        class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
-                        @click="saveBackends"
-                    >
-                        保存配置
-                    </button>
+                    <button class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-all" @click="saveBackends"><i class="fas fa-save"></i> 保存配置</button>
                 </template>
             </el-dialog>
         </div>
     </div>
 
     <script>
-        const { createApp } = Vue;
+        const { createApp, ref } = Vue;
         const ElementPlus = window.ElementPlus;
 
-        createApp({
+        function debounce(func, wait) {
+            let timeout;
+            return function (...args) {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(this, args), wait);
+            };
+        }
+
+        const app = createApp({
             data() {
+                const validatePort = (rule, value, callback) => {
+                    const port = Number(value);
+                    if (!value || isNaN(port) || port < 1 || port > 65535) {
+                        callback(new Error('端口必须是 1-65535 之间的数字'));
+                    } else {
+                        callback();
+                    }
+                };
                 return {
+                    isDarkMode: false, // 默认白天模式
                     currentBackend: '',
                     backends: [],
+                    tempBackends: [], // 用于对话框编辑
                     rules: [],
-                    addDialogVisible: false,
-                    editDialogVisible: false,
+                    formDialogVisible: false,
                     backendDialogVisible: false,
                     systemInfoExpanded: true,
                     loading: false,
                     formLoading: false,
-                    searchPort: null,
-                    portSearchLoading: false,
-                    portSearchResult: null,
-                    newRulePortStatus: null,
-                    editRulePortStatus: null,
-                    suggestedPorts: [],
-                    portRange: { min: 1, max: 65535 },
-                    newRule: {
-                        id: '',
-                        protocol: 'tcp',
-                        source_port: null,
-                        destination: '',
-                        destination_port: null,
-                        expire_minutes: 0
-                    },
-                    editRule: {
-                        originalId: '',
-                        id: '',
-                        protocol: 'tcp',
-                        source_port: null,
-                        destination: '',
-                        destination_port: null,
-                        expire_minutes: 0
-                    },
+                    portStatus: null,
+                    dialogMode: 'add', // 'add' or 'edit'
+                    currentRule: {},
                     systemInfo: {
                         total_forwardings: 0,
                         used_ports: [],
                         available_ports: [],
                         cpu_usage: 0,
-                        mem_usage: 0
+                        mem_usage: 0,
+                        port_usage: 0
                     },
                     formRules: {
-                        id: [
-                            { required: true, message: '请输入规则ID', trigger: 'blur' },
-                            {
-                                pattern: /^[\u4e00-\u9fa5\w-]+$/,
-                                message: 'ID 只能包含中文、英文、数字、下划线或连字符',
-                                trigger: 'blur'
-                            }
-                        ],
+                        id: [{ required: true, message: '请输入规则ID', trigger: 'blur' }, { pattern: /^[\u4e00-\u9fa5\w-]+$/, message: 'ID只能包含中文、英文、数字、下划线或连字符', trigger: 'blur' }],
                         protocol: [{ required: true, message: '请选择协议', trigger: 'change' }],
-                        source_port: [
-                            { required: true, message: '请输入本地端口', trigger: 'blur' },
-                            {
-                                validator: (rule, value, callback) => {
-                                    if (value < 1 || value > 65535) {
-                                        callback(new Error('端口必须在 1-65535 范围内'));
-                                    } else {
-                                        callback();
-                                    }
-                                },
-                                trigger: 'blur'
-                            }
-                        ],
+                        source_port: [{ required: true, message: '请输入本地端口', trigger: 'blur' }, { validator: validatePort, trigger: 'blur' }],
                         destination: [{ required: true, message: '请输入目标地址', trigger: 'blur' }],
-                        destination_port: [
-                            { required: true, message: '请输入目标端口', trigger: 'blur' },
-                            {
-                                validator: (rule, value, callback) => {
-                                    if (value < 1 || value > 65535) {
-                                        callback(new Error('端口必须在 1-65535 范围内'));
-                                    } else {
-                                        callback();
-                                    }
-                                },
-                                trigger: 'blur'
-                            }
-                        ],
+                        destination_port: [{ required: true, message: '请输入目标端口', trigger: 'blur' }, { type: 'number', min: 1, max: 65535, message: '端口必须在 1-65535 范围内', trigger: 'blur' }],
                         expire_minutes: [{ required: true, message: '请输入有效期', trigger: 'blur' }]
                     }
                 }
@@ -473,20 +363,23 @@
                     return backend?.url || '';
                 },
                 portRangeText() {
-                    const availablePorts = this.systemInfo.available_ports || [];
-                    const usedPorts = this.systemInfo.used_ports || [];
-                    const allPorts = [...availablePorts, ...usedPorts];
-                    
-                    if (allPorts.length === 0) {
-                        return '未知';
-                    }
-                    
+                    const allPorts = [...this.systemInfo.available_ports, ...this.systemInfo.used_ports];
+                    if (allPorts.length === 0) return '未知';
                     const minPort = Math.min(...allPorts);
                     const maxPort = Math.max(...allPorts);
                     return `${minPort}-${maxPort}`;
+                },
+                formTitle() {
+                    return this.dialogMode === 'add' ? '添加新规则' : '修改规则';
                 }
             },
             mounted() {
+                // 加载主题模式
+                const savedTheme = localStorage.getItem('preferredTheme');
+                this.isDarkMode = savedTheme ? savedTheme === 'dark' : false; // 默认白天模式
+                this.updateTheme(false); // 首次加载不刷新图片
+
+                // 加载后端
                 this.loadBackends();
                 if (this.backends.length > 0) {
                     this.currentBackend = this.backends[0].name;
@@ -494,32 +387,38 @@
                 }
             },
             methods: {
-                async loadBackends() {
+                updateTheme(refreshImage = true) {
+                    document.body.classList.toggle('dark', this.isDarkMode);
+                    if (refreshImage) {
+                         document.body.style.backgroundImage = `url('https://www.loliapi.com/acg?v=${Date.now()}')`;
+                    }
+                },
+                toggleDarkMode() {
+                    this.isDarkMode = !this.isDarkMode;
+                    localStorage.setItem('preferredTheme', this.isDarkMode ? 'dark' : 'light');
+                    this.updateTheme();
+                },
+                loadBackends() {
                     try {
                         const saved = localStorage.getItem('backends');
-                        this.backends = saved ? JSON.parse(saved) : [
-                            { name: '我的服务器', url: 'http://localhost:2017' }
-                        ];
+                        this.backends = saved ? JSON.parse(saved) : [{ name: '本地服务', url: 'http://localhost:2017' }];
                     } catch {
                         this.backends = [];
                         this.$message.error('加载后端配置失败');
                     }
                 },
+                async apiFetch(endpoint, options = {}) {
+                    if (!this.currentBackendUrl) throw new Error('未选择有效的后端');
+                    const response = await fetch(`${this.currentBackendUrl}${endpoint}`, options);
+                    const data = await response.json();
+                    if (data.code !== 0) throw new Error(data.message || '请求失败');
+                    return data.data;
+                },
                 async loadData() {
-                    if (!this.currentBackend) return;
                     this.loading = true;
                     try {
-                        const backend = this.backends.find(b => b.name === this.currentBackend);
-                        if (!backend) throw new Error('未选择后端');
-                        const response = await fetch(`${backend.url}/api/forwardings`);
-                        const { code, data, message } = await response.json();
-                        if (code !== 0) throw new Error(message || '加载规则失败');
-                        this.rules = data.map(r => ({
-                            ...r,
-                            status: r.status === 'running' ? 'running' : 'stopped',
-                            isExpanded: false,
-                            loading: false
-                        }));
+                        const data = await this.apiFetch('/api/forwardings');
+                        this.rules = data.map(r => ({ ...r, isExpanded: false, loading: false }));
                         await this.loadSystemInfo();
                     } catch (error) {
                         this.$message.error(error.message || '数据加载失败');
@@ -529,256 +428,138 @@
                 },
                 async loadSystemInfo() {
                     try {
-                        const backend = this.backends.find(b => b.name === this.currentBackend);
-                        if (!backend) return;
-                        const response = await fetch(`${backend.url}/api/system`);
-                        const { code, data, message } = await response.json();
-                        if (code !== 0) throw new Error(message || '加载系统信息失败');
+                        const data = await this.apiFetch('/api/system');
                         this.systemInfo = data;
-                        if (data.available_ports.length > 0) {
-                            this.suggestedPorts = data.available_ports.slice(0, 5);
-                        }
+                        const totalPorts = data.available_ports.length + data.used_ports.length;
+                        this.systemInfo.port_usage = totalPorts > 0 ? Math.round((data.used_ports.length / totalPorts) * 100) : 0;
                     } catch (error) {
                         this.$message.error(error.message || '系统信息加载失败');
                     }
                 },
-                async checkPort(event) {
-                    event.stopPropagation();
-                    if (!this.searchPort) {
-                        this.$message.warning('请输入端口号');
-                        return;
-                    }
-                    if (this.searchPort < 1 || this.searchPort > 65535) {
-                        this.portSearchResult = {
-                            available: false,
-                            message: `端口 ${this.searchPort} 不在允许范围内 (1-65535)`
-                        };
-                        return;
-                    }
-                    this.portSearchLoading = true;
-                    this.portSearchResult = null;
+                querySearchPorts(queryString, cb) {
+                    const availablePorts = this.systemInfo.available_ports || [];
+                    const results = queryString
+                        ? availablePorts.filter(p => String(p).startsWith(queryString))
+                        : availablePorts;
+                    cb(results.slice(0, 100).map(p => ({ value: String(p) })));
+                },
+                async checkFormPort() {
+                    this.portStatus = null;
+                    const port = Number(this.currentRule.source_port);
+                    if (!port || port < 1 || port > 65535) return;
+                    
                     try {
-                        const backend = this.backends.find(b => b.name === this.currentBackend);
-                        if (!backend) return;
-                        const response = await fetch(`${backend.url}/api/system`);
-                        const { code, data, message } = await response.json();
-                        if (code !== 0) throw new Error(message || '端口检查失败');
-                        const isAvailable = data.available_ports.includes(this.searchPort);
-                        this.portSearchResult = {
+                        const data = await this.apiFetch('/api/system');
+                        const originalPort = this.dialogMode === 'edit' ? this.rules.find(r => r.id === this.currentRule.originalId)?.source_port : -1;
+                        const isAvailable = data.available_ports.includes(port) || port === originalPort;
+                        
+                        this.portStatus = {
                             available: isAvailable,
-                            message: `端口 ${this.searchPort} ${isAvailable ? '可用' : '不可用'}`
+                            message: `端口 ${port} ${isAvailable ? '可用' : '已被占用'}`
                         };
                     } catch (error) {
-                        this.$message.error(error.message || '端口检查失败');
-                    } finally {
-                        this.portSearchLoading = false;
+                        this.portStatus = { available: false, message: '端口检查失败' };
                     }
                 },
-                async checkFormPort(formType) {
-                    const rule = formType === 'newRule' ? this.newRule : this.editRule;
-                    const statusKey = formType === 'newRule' ? 'newRulePortStatus' : 'editRulePortStatus';
-                    this[statusKey] = null;
-                    this.suggestedPorts = [];
-                    if (!rule.source_port) return;
-                    if (rule.source_port < 1 || rule.source_port > 65535) {
-                        this[statusKey] = {
-                            available: false,
-                            message: `端口 ${rule.source_port} 不在允许范围内 (1-65535)`
-                        };
-                        return;
-                    }
-                    try {
-                        const backend = this.backends.find(b => b.name === this.currentBackend);
-                        if (!backend) return;
-                        const response = await fetch(`${backend.url}/api/system`);
-                        const { code, data, message } = await response.json();
-                        if (code !== 0) throw new Error(message || '端口检查失败');
-                        const isAvailable = data.available_ports.includes(rule.source_port) || 
-                            (formType === 'editRule' && rule.source_port === this.rules.find(r => r.id === this.editRule.originalId)?.source_port);
-                        this[statusKey] = {
-                            available: isAvailable,
-                            message: `端口 ${rule.source_port} ${isAvailable ? '可用' : '不可用'}`
-                        };
-                        if (!isAvailable) {
-                            this.suggestedPorts = data.available_ports
-                                .filter(port => port !== rule.source_port)
-                                .slice(0, 5);
-                        }
-                    } catch (error) {
-                        this[statusKey] = {
-                            available: false,
-                            message: '端口检查失败'
-                        };
-                    }
+                debouncedCheckFormPort: debounce(function() { this.checkFormPort(); }, 500),
+                handlePortSelect() {
+                    this.$nextTick(() => { this.checkFormPort(); });
                 },
                 async toggleRule(rule, action) {
                     rule.loading = true;
                     try {
-                        const backend = this.backends.find(b => b.name === this.currentBackend);
-                        const res = await fetch(`${backend.url}/api/forwardings/${rule.id}/${action}`, {
-                            method: 'POST'
-                        });
-                        const { code, message } = await res.json();
-                        if (code === 0) {
-                            this.$message.success('操作成功');
-                            await this.loadData();
-                        } else {
-                            throw new Error(message || '操作失败');
-                        }
+                        await this.apiFetch(`/api/forwardings/${rule.id}/${action}`, { method: 'POST' });
+                        this.$message.success('操作成功');
+                        await this.loadData();
                     } catch (error) {
-                        this.$message.error(error.message || '网络错误');
-                    } finally {
-                        rule.loading = false;
+                        this.$message.error(error.message);
+                        rule.loading = false; // 仅在失败时重置
                     }
                 },
                 async deleteRule(id) {
-                    this.rules.find(r => r.id === id).loading = true;
                     try {
-                        const backend = this.backends.find(b => b.name === this.currentBackend);
-                        const res = await fetch(`${backend.url}/api/forwardings/${id}`, {
-                            method: 'DELETE'
-                        });
-                        const { code, message } = await res.json();
-                        if (code === 0) {
-                            this.$message.success('删除成功');
-                            await this.loadData();
-                        } else {
-                            throw new Error(message || '删除失败');
-                        }
+                        await this.$confirm('此操作将永久删除该规则, 是否继续?', '提示', { confirmButtonText: '确定', cancelButtonText: '取消', type: 'warning' });
+                        const rule = this.rules.find(r => r.id === id);
+                        if (rule) rule.loading = true;
+                        await this.apiFetch(`/api/forwardings/${id}`, { method: 'DELETE' });
+                        this.$message.success('删除成功');
+                        await this.loadData();
                     } catch (error) {
-                        this.$message.error(error.message || '删除失败');
+                         if (error !== 'cancel') this.$message.error(error.message || '删除失败');
                     }
                 },
                 showAddDialog() {
-                    this.addDialogVisible = true;
-                    this.newRule = {
-                        id: '',
-                        protocol: 'tcp',
-                        source_port: null,
-                        destination: '',
-                        destination_port: null,
-                        expire_minutes: 0
-                    };
-                    this.newRulePortStatus = null;
-                    this.suggestedPorts = this.systemInfo.available_ports.slice(0, 5);
-                    this.$nextTick(() => {
-                        if (this.$refs.addForm) {
-                            this.$refs.addForm.clearValidate();
-                        }
-                    });
-                },
-                async addRule() {
-                    if (!this.$refs.addForm) return;
-                    this.$refs.addForm.validate(async (valid) => {
-                        if (!valid) return;
-                        if (!this.newRulePortStatus?.available) {
-                            this.$message.error('本地端口不可用，请选择其他端口');
-                            return;
-                        }
-                        this.formLoading = true;
-                        try {
-                            const backend = this.backends.find(b => b.name === this.currentBackend);
-                            const res = await fetch(`${backend.url}/api/forwardings`, {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify(this.newRule)
-                            });
-                            const { code, message } = await res.json();
-                            if (code === 0) {
-                                this.$message.success('添加成功');
-                                this.addDialogVisible = false;
-                                await this.loadData();
-                            } else {
-                                throw new Error(message || '添加失败');
-                            }
-                        } catch (error) {
-                            this.$message.error(error.message || '网络错误');
-                        } finally {
-                            this.formLoading = false;
-                        }
-                    });
+                    this.dialogMode = 'add';
+                    this.currentRule = { id: '', protocol: 'tcp', source_port: '', destination: '', destination_port: null, expire_minutes: 0 };
+                    this.portStatus = null;
+                    this.formDialogVisible = true;
+                    this.$nextTick(() => this.$refs.ruleForm?.clearValidate());
                 },
                 showEditDialog(rule) {
-                    this.editRule = {
-                        originalId: rule.id,
-                        id: rule.id,
-                        protocol: rule.protocol,
-                        source_port: rule.source_port,
-                        destination: rule.destination,
-                        destination_port: rule.destination_port,
-                        expire_minutes: rule.remaining_minutes || 0
+                    this.dialogMode = 'edit';
+                    this.currentRule = { 
+                        ...rule, 
+                        source_port: String(rule.source_port), // Autocomplete needs string
+                        originalId: rule.id 
                     };
-                    this.editDialogVisible = true;
-                    this.editRulePortStatus = null;
-                    this.suggestedPorts = this.systemInfo.available_ports.slice(0, 5);
+                    this.portStatus = null;
+                    this.formDialogVisible = true;
                     this.$nextTick(() => {
-                        if (this.$refs.editForm) {
-                            this.$refs.editForm.clearValidate();
-                            this.checkFormPort('editRule');
-                        }
+                        this.$refs.ruleForm?.clearValidate();
+                        this.checkFormPort();
                     });
                 },
-                async saveEditRule() {
-                    if (!this.$refs.editForm) return;
-                    this.$refs.editForm.validate(async (valid) => {
+                async submitRule() {
+                    await this.$refs.ruleForm.validate(async (valid) => {
                         if (!valid) return;
-                        if (!this.editRulePortStatus?.available) {
+                        if (this.portStatus && !this.portStatus.available) {
                             this.$message.error('本地端口不可用，请选择其他端口');
                             return;
                         }
                         this.formLoading = true;
+                        const ruleData = { ...this.currentRule, source_port: Number(this.currentRule.source_port) };
                         try {
-                            const backend = this.backends.find(b => b.name === this.currentBackend);
-                            await fetch(`${backend.url}/api/forwardings/${this.editRule.originalId}`, {
-                                method: 'DELETE'
-                            });
-                            const res = await fetch(`${backend.url}/api/forwardings`, {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({
-                                    ...this.editRule,
-                                    editing_id: this.editRule.originalId
-                                })
-                            });
-                            const { code, message } = await res.json();
-                            if (code === 0) {
-                                this.$message.success('修改成功');
-                                this.editDialogVisible = false;
-                                await this.loadData();
+                            if (this.dialogMode === 'add') {
+                                await this.apiFetch('/api/forwardings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(ruleData) });
                             } else {
-                                throw new Error(message || '修改失败');
+                                await this.apiFetch(`/api/forwardings/${ruleData.originalId}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(ruleData) });
                             }
+                            this.$message.success('保存成功');
+                            this.formDialogVisible = false;
+                            await this.loadData();
                         } catch (error) {
-                            this.$message.error(error.message || '网络错误');
+                            this.$message.error(error.message);
                         } finally {
                             this.formLoading = false;
                         }
                     });
                 },
-                saveBackends() {
-                    try {
-                        localStorage.setItem('backends', JSON.stringify(this.backends));
-                        this.$message.success('配置已保存');
-                        this.backendDialogVisible = false;
-                        this.loadData();
-                    } catch {
-                        this.$message.error('保存配置失败');
-                    }
-                },
                 showBackendDialog() {
+                    this.tempBackends = JSON.parse(JSON.stringify(this.backends)); // 深拷贝进行编辑
                     this.backendDialogVisible = true;
                 },
                 addBackendField() {
-                    this.backends.push({
-                        name: `服务器 ${this.backends.length + 1}`,
-                        url: 'http://'
-                    });
+                    this.tempBackends.push({ name: `新服务器 ${this.tempBackends.length + 1}`, url: 'http://' });
                 },
                 removeBackend(index) {
-                    this.backends.splice(index, 1);
+                    this.tempBackends.splice(index, 1);
+                },
+                saveBackends() {
+                    this.backends = this.tempBackends;
+                    localStorage.setItem('backends', JSON.stringify(this.backends));
+                    this.$message.success('配置已保存');
+                    this.backendDialogVisible = false;
+                    // 如果当前选中的后端被删除了，重置
+                    if (!this.backends.find(b => b.name === this.currentBackend)) {
+                        this.currentBackend = this.backends[0]?.name || '';
+                    }
+                    this.loadData();
                 }
             }
-        }).use(ElementPlus).mount('#app')
+        });
+
+        app.use(ElementPlus);
+        app.mount('#app');
     </script>
 </body>
 </html>
