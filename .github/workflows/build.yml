@@ -1,8 +1,9 @@
-name: Build
+name: Build & Release
 
 on:
   push:
-    branches: [ main ]
+    tags:
+      - 'v*'
   workflow_dispatch:
 
 permissions:
@@ -18,28 +19,21 @@ jobs:
         with:
           python-version: 3.9
 
-      - name: Install dependencies
-        run: |
+      - run: |
           sudo apt-get update
           sudo apt-get install -y gcc
           pip install -r requirements.txt
           pip install pyinstaller
 
-      - name: Build executable
-        run: pyinstaller --onefile --distpath dist main.py
+      - run: pyinstaller --onefile --distpath dist main.py
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
+        if: github.ref_type == 'tag'
         with:
-          name: "Auto Release – ${{ github.run_number }}"
-          tag_name: "v${{ github.run_number }}"
+          tag_name: ${{ github.ref_name }}
+          name: ${{ github.ref_name }}
           generate_release_notes: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
-
-      - name: Upload binary
-        uses: softprops/action-gh-release@v2
-        with:
           files: dist/main
         env:
           GITHUB_TOKEN: ${{ secrets.GH_PAT }}
