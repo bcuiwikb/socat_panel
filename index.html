@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>端口转发管理系统</title>
-    <link href="img/favicon.png">
+    <link rel="icon" type="image/png" href="img/favicon.png">
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://unpkg.com/element-plus@2.4.4/dist/index.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
@@ -12,6 +12,19 @@
     <script src="https://unpkg.com/vue@3.4.21/dist/vue.global.prod.js"></script>
     <script src="https://unpkg.com/element-plus@2.4.4/dist/index.full.min.js"></script>
     <style>
+        /* 基础样式 */
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background-image: url('https://www.loliapi.com/acg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            transition: background-image 0.5s ease-in-out;
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+        }
+        
         /* 暗黑模式样式 */
         .dark .bg-gray-100 { background-color: #1a202c !important; }
         .dark .bg-white { background-color: #2d3748 !important; }
@@ -102,21 +115,17 @@
         .arrow-icon.expanded { transform: rotate(180deg); }
 
         /* 壁纸和毛玻璃效果 */
-        body {
-            background-image: url('https://www.loliapi.com/acg');
-            background-size: cover;
-            background-position: center;
-            background-attachment: fixed;
-            transition: background-image 0.5s ease-in-out;
-        }
         .glass-effect {
             backdrop-filter: blur(12px) saturate(150%);
             background-color: rgba(255, 255, 255, 0.15);
             border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
         }
         .dark .glass-effect {
             background-color: rgba(26, 32, 44, 0.7);
             border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
         }
 
         /* 去除点击时的蓝色框框 */
@@ -141,7 +150,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            border-radius: 0.5rem;
+            border-radius: 0.75rem;
             transition: all 0.3s ease;
             cursor: pointer;
             background-color: #f0f0f0;
@@ -169,6 +178,7 @@
             background: linear-gradient(90deg, #3b82f6, #60a5fa);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+            margin: 0;
         }
         .dark .header-title h1 {
             background: linear-gradient(90deg, #60a5fa, #93c5fd);
@@ -205,11 +215,40 @@
             transform: translateY(-5px);
             box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
         }
+        
+        /* 自定义滚动条 */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.05);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(59, 130, 246, 0.5);
+            border-radius: 4px;
+        }
+        .dark ::-webkit-scrollbar-thumb {
+            background: rgba(96, 165, 250, 0.5);
+        }
+        
+        /* 后端管理区域 */
+        .backend-section {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        @media (min-width: 640px) {
+            .backend-section {
+                flex-direction: row;
+                align-items: center;
+            }
+        }
     </style>
 </head>
 <body class="font-sans antialiased" :class="{ 'dark': isDarkMode }">
     <div id="app" class="max-w-5xl mx-auto p-4 sm:p-6">
-        <div class="rounded-lg shadow-xl p-6 glass-effect">
+        <div class="rounded-xl p-6 glass-effect">
             <div class="header-title">
                 <div class="header-icon">
                     <i class="fas fa-network-wired"></i>
@@ -228,8 +267,8 @@
                 </button>
             </div>
 
-            <div class="mb-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-md glass-effect">
-                <div class="flex items-center gap-2">
+            <div class="mb-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-xl glass-effect">
+                <div class="backend-section">
                     <button 
                         class="bg-indigo-500 text-white px-4 py-2 rounded-md hover:bg-indigo-600 text-sm transition-all flex items-center gap-2"
                         @click="showBackendDialog"
@@ -237,7 +276,7 @@
                     >
                         <i class="fas fa-server"></i> 管理后端
                     </button>
-                    <el-select v-model="currentBackend" @change="loadData" placeholder="选择后端" class="flex-grow" :disabled="loading">
+                    <el-select v-model="currentBackend" @change="loadData" placeholder="选择后端" class="flex-grow mt-2 sm:mt-0" :disabled="loading">
                         <el-option v-for="backend in backends" :key="backend.name" :label="`${backend.name} (${backend.url})`" :value="backend.name" />
                     </el-select>
                 </div>
@@ -297,7 +336,7 @@
                         <div v-for="n in 3" :key="n" class="h-24 bg-gray-200 dark:bg-gray-600 rounded-md"></div>
                     </div>
                     <div v-else-if="!rules.length" class="text-center text-gray-500 dark:text-gray-400 py-8">暂无规则</div>
-                    <div v-else class="space-y-4">
+                    <div v-else class="space-y-4 max-h-[500px] overflow-y-auto pr-2">
                         <div v-for="rule in rules" :key="rule.id" class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md p-4 shadow-sm hover:shadow-lg transition-all duration-300 rule-item glass-effect">
                             <div class="flex justify-between items-center cursor-pointer" @click="rule.isExpanded = !rule.isExpanded">
                                 <div class="flex items-center space-x-3">
