@@ -2,20 +2,19 @@ name: Build
 
 on:
   push:
-    branches:
-      - main  # 或你使用的主分支
-  workflow_dispatch:  # 支持手动触发
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   build:
     runs-on: ubuntu-22.04
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
+      - uses: actions/setup-python@v4
         with:
           python-version: 3.9
 
@@ -26,23 +25,21 @@ jobs:
           pip install -r requirements.txt
           pip install pyinstaller
 
-      - name: Build executable with PyInstaller
-        run: |
-          pyinstaller --onefile --distpath dist main.py
-          # 根据你的入口文件调整 main.py
+      - name: Build executable
+        run: pyinstaller --onefile --distpath dist main.py
 
-      - name: Create GitHub Release
+      - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          name: "Auto Release - ${{ github.run_number }}"
+          name: "Auto Release – ${{ github.run_number }}"
           tag_name: "v${{ github.run_number }}"
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GH_PAT }}
 
-      - name: Upload binary to Release
+      - name: Upload binary
         uses: softprops/action-gh-release@v2
         with:
-          files: dist/main  # 可根据需要更换目标文件路径
+          files: dist/main
         env:
           GITHUB_TOKEN: ${{ secrets.GH_PAT }}
