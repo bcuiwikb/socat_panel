@@ -3,12 +3,12 @@ name: Build
 on:
   push:
     branches:
-      - main  # 或者你使用的分支名称
-  workflow_dispatch:  # 允许手动触发
+      - main  # 或你使用的分支
+  workflow_dispatch:  # 支持手动触发
 
 jobs:
   build:
-    runs-on: ubuntu-22.04  # 使用较旧的 Ubuntu 版本以兼容低版本服务器
+    runs-on: ubuntu-20.04
 
     steps:
       - name: Checkout code
@@ -17,22 +17,32 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: 3.9  # 使用较旧的 Python 版本以兼容低版本服务器
+          python-version: 3.9
 
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y gcc  # 安装编译器
-          pip install -r requirements.txt  # 安装项目依赖
-          pip install pyinstaller  # 安装 PyInstaller
+          sudo apt-get install -y gcc
+          pip install -r requirements.txt
+          pip install pyinstaller
 
       - name: Build executable with PyInstaller
         run: |
           pyinstaller --onefile --distpath dist main.py
-          # main.py 是你的入口脚本文件名，根据实际情况修改
 
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
+      - name: Create Release
+        id: create_release
+        uses: softprops/action-gh-release@v2
         with:
-          name: main
-          path: dist/
+          name: "Auto Release - ${{ github.run_number }}"
+          tag_name: "v${{ github.run_number }}"
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload binary to Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/main
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
