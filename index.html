@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>端口转发管理</title>
+    <title>端口转发管理系统</title>
     <link rel="icon" type="image/png" href="img/favicon.png">
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://unpkg.com/element-plus@2.4.4/dist/index.css">
@@ -12,6 +12,35 @@
     <script src="https://unpkg.com/vue@3.4.21/dist/vue.global.prod.js"></script>
     <script src="https://unpkg.com/element-plus@2.4.4/dist/index.full.min.js"></script>
     <style>
+        :root {
+            --primary-gradient: linear-gradient(90deg, #3b82f6, #60a5fa);
+            --primary-gradient-dark: linear-gradient(90deg, #60a5fa, #93c5fd);
+            --glass-bg-light: rgba(255, 255, 255, 0.15);
+            --glass-bg-dark: rgba(26, 32, 44, 0.7);
+            --glass-border-light: rgba(255, 255, 255, 0.2);
+            --glass-border-dark: rgba(255, 255, 255, 0.1);
+            --glass-shadow-light: 0 10px 30px rgba(0, 0, 0, 0.1);
+            --glass-shadow-dark: 0 10px 30px rgba(0, 0, 0, 0.3);
+            --transition-duration: 0.3s;
+        }
+        
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background-image: url('https://www.loliapi.com/acg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            transition: background-image 0.5s ease-in-out;
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f2f5;
+        }
+        
+        .dark body {
+            background-color: #1a202c;
+        }
+        
         /* 暗黑模式样式 */
         .dark .bg-gray-100 { background-color: #1a202c !important; }
         .dark .bg-white { background-color: #2d3748 !important; }
@@ -30,7 +59,7 @@
             animation-duration: 0.4s;
         }
 
-        /* 规则列表字体大小调整 (已优化) */
+        /* 规则列表字体大小调整 */
         .rule-item { font-size: 0.875rem; }
         .rule-item .font-medium { font-size: 0.95rem; }
 
@@ -48,14 +77,14 @@
         }
         .progress-bar {
             height: 100%;
-            background: linear-gradient(90deg, #3b82f6, #60a5fa);
+            background: var(--primary-gradient);
             transition: width 0.5s ease-in-out;
             position: relative;
-            overflow: hidden; /* 关键：将气泡限制在内部 */
+            overflow: hidden;
             border-radius: 999px;
         }
         .dark .progress-bar {
-            background: linear-gradient(90deg, #60a5fa, #93c5fd);
+            background: var(--primary-gradient-dark);
         }
         
         /* 进度条流动光效 */
@@ -75,7 +104,7 @@
         /* 精致的气泡动画 */
         .bubble {
             position: absolute;
-            bottom: -20px; /* 从进度条下方开始 */
+            bottom: -20px;
             width: 12px;
             height: 12px;
             background-color: rgba(255, 255, 255, 0.3);
@@ -98,25 +127,21 @@
         .bubble:nth-child(3) { animation-delay: 0.8s; --sway: 10px; }
 
         /* 展开/收起箭头动画 */
-        .arrow-icon { transition: transform 0.3s ease; }
+        .arrow-icon { transition: transform var(--transition-duration) ease; }
         .arrow-icon.expanded { transform: rotate(180deg); }
 
         /* 壁纸和毛玻璃效果 */
-        body {
-            background-image: url('https://www.loliapi.com/acg');
-            background-size: cover;
-            background-position: center;
-            background-attachment: fixed;
-            transition: background-image 0.5s ease-in-out;
-        }
         .glass-effect {
             backdrop-filter: blur(12px) saturate(150%);
-            background-color: rgba(255, 255, 255, 0.15);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            background-color: var(--glass-bg-light);
+            border: 1px solid var(--glass-border-light);
+            border-radius: 16px;
+            box-shadow: var(--glass-shadow-light);
         }
         .dark .glass-effect {
-            background-color: rgba(26, 32, 44, 0.7);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            background-color: var(--glass-bg-dark);
+            border: 1px solid var(--glass-border-dark);
+            box-shadow: var(--glass-shadow-dark);
         }
 
         /* 去除点击时的蓝色框框 */
@@ -131,80 +156,224 @@
 
         /* 美化对话框和按钮 */
         .el-dialog { border-radius: 12px !important; }
-        .el-button { transition: all 0.3s ease; }
+        .el-button { transition: all var(--transition-duration) ease; }
         .el-button:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+        
+        /* 控制按钮样式 */
+        .control-button {
+            width: 2.5rem;
+            height: 2.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 0.75rem;
+            transition: all var(--transition-duration) ease;
+            cursor: pointer;
+            background-color: #f0f0f0;
+            color: #333;
+        }
+        .dark .control-button {
+            background-color: #374151;
+            color: #f9fafb;
+        }
+        .control-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        /* 标题样式 */
+        .header-title {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
+        .header-title h1 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin: 0;
+        }
+        .dark .header-title h1 {
+            background: var(--primary-gradient-dark);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .header-icon {
+            background: linear-gradient(135deg, #3b82f6, #60a5fa);
+            width: 2.5rem;
+            height: 2.5rem;
+            border-radius: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+        .dark .header-icon {
+            background: linear-gradient(135deg, #60a5fa, #93c5fd);
+        }
+        
+        /* 状态卡片 */
+        .status-card {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 0.75rem;
+            padding: 1.25rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            transition: all var(--transition-duration) ease;
+        }
+        .dark .status-card {
+            background: rgba(26, 32, 44, 0.3);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        }
+        .status-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* 自定义滚动条 */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.05);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(59, 130, 246, 0.5);
+            border-radius: 4px;
+        }
+        .dark ::-webkit-scrollbar-thumb {
+            background: rgba(96, 165, 250, 0.5);
+        }
+        
+        /* 后端管理区域 */
+        .backend-section {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        @media (min-width: 640px) {
+            .backend-section {
+                flex-direction: row;
+                align-items: center;
+            }
+        }
+        
+        /* 优化布局 */
+        .content-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        /* 加载指示器 */
+        .loader {
+            display: inline-block;
+            width: 1rem;
+            height: 1rem;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* 规则卡片悬停效果 */
+        .rule-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .rule-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
     </style>
 </head>
-<body class="bg-gray-100 font-sans antialiased" :class="{ 'dark': isDarkMode }">
+<body class="font-sans antialiased" :class="{ 'dark': isDarkMode }">
     <div id="app" class="max-w-5xl mx-auto p-4 sm:p-6">
-        <div class="rounded-lg shadow-xl p-6 glass-effect">
-            <div class="flex justify-end mb-4">
+        <div class="rounded-xl p-6 glass-effect">
+            <div class="header-title">
+                <div class="header-icon">
+                    <i class="fas fa-network-wired"></i>
+                </div>
+                <h1>端口转发管理系统</h1>
+                
+                <div class="flex-grow"></div>
+                
+                <!-- 黑暗/白天模式按钮（仅图标） -->
                 <button 
-                    class="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-3 py-1 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 text-sm transition-all"
+                    class="control-button"
                     @click="toggleDarkMode"
+                    :aria-label="isDarkMode ? '切换白天模式' : '切换黑暗模式'"
+                    :title="isDarkMode ? '切换白天模式' : '切换黑暗模式'"
                 >
                     <i :class="isDarkMode ? 'fas fa-sun' : 'fas fa-moon'"></i>
-                    {{ isDarkMode ? '白天模式' : '黑暗模式' }}
                 </button>
             </div>
 
-            <div class="mb-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-md glass-effect">
-                <button 
-                    class="bg-indigo-500 text-white px-4 py-2 rounded-md hover:bg-indigo-600 text-sm mr-2 transition-all"
-                    @click="showBackendDialog"
-                    :disabled="loading"
-                >
-                    <i class="fas fa-server"></i> 管理后端
-                </button>
-                <el-select v-model="currentBackend" @change="loadData" placeholder="选择后端" class="w-full mt-2" :disabled="loading">
-                    <el-option v-for="backend in backends" :key="backend.name" :label="`${backend.name} (${backend.url})`" :value="backend.name" />
-                </el-select>
+            <div class="mb-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-xl glass-effect">
+                <div class="backend-section">
+                    <button 
+                        class="bg-indigo-500 text-white px-4 py-2 rounded-md hover:bg-indigo-600 text-sm transition-all flex items-center gap-2"
+                        @click="showBackendDialog"
+                        :disabled="loading"
+                    >
+                        <i class="fas fa-server"></i> 管理后端
+                    </button>
+                    <el-select v-model="currentBackend" @change="loadData" placeholder="选择后端" class="flex-grow mt-2 sm:mt-0" :disabled="loading">
+                        <el-option v-for="backend in backends" :key="backend.name" :label="`${backend.name} (${backend.url})`" :value="backend.name" />
+                    </el-select>
+                </div>
             </div>
 
             <div class="layout-container">
-                <div class="status-section mb-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-md glass-effect cursor-pointer">
-                    <div class="flex justify-between items-center" @click="systemInfoExpanded = !systemInfoExpanded">
-                        <h4 class="text-lg font-semibold text-gray-800 dark:text-gray-200">系统状态</h4>
-                        <el-tooltip :content="systemInfoExpanded ? '收起' : '展开'" placement="top">
-                            <i :class="['fas fa-chevron-down arrow-icon', { 'expanded': systemInfoExpanded }]" class="text-gray-600 dark:text-gray-400"></i>
-                        </el-tooltip>
-                    </div>
-                    <el-collapse-transition>
-                        <div v-show="systemInfoExpanded" class="mt-4">
-                            <p class="text-sm text-gray-600 dark:text-gray-300">转发规则数量: {{ systemInfo.total_forwardings }}</p>
-                            <div class="mt-2">
-                                <p class="text-sm text-gray-600 dark:text-gray-300">CPU: {{ systemInfo.cpu_usage }}%</p>
-                                <div class="progress-container">
-                                    <div class="progress-bar" :style="{ width: systemInfo.cpu_usage + '%' }">
-                                        <div class="bubble"></div><div class="bubble"></div><div class="bubble"></div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="mt-2">
-                                <p class="text-sm text-gray-600 dark:text-gray-300">内存: {{ systemInfo.mem_usage }}%</p>
-                                <div class="progress-container">
-                                    <div class="progress-bar" :style="{ width: systemInfo.mem_usage + '%' }">
-                                        <div class="bubble"></div><div class="bubble"></div><div class="bubble"></div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="mt-2">
-                                <p class="text-sm text-gray-600 dark:text-gray-300">端口使用率: {{ systemInfo.port_usage }}%</p>
-                                <div class="progress-container">
-                                    <div class="progress-bar" :style="{ width: systemInfo.port_usage + '%' }">
-                                        <div class="bubble"></div><div class="bubble"></div><div class="bubble"></div>
-                                    </div>
-                                </div>
-                            </div>
-                            <p class="text-sm text-gray-600 dark:text-gray-300 mt-2">允许端口范围: {{ portRangeText }}</p>
+                <div class="status-section mb-6">
+                    <div class="status-card cursor-pointer" @click="systemInfoExpanded = !systemInfoExpanded">
+                        <div class="flex justify-between items-center">
+                            <h4 class="text-lg font-semibold text-gray-800 dark:text-gray-200">系统状态</h4>
+                            <el-tooltip :content="systemInfoExpanded ? '收起' : '展开'" placement="top">
+                                <i :class="['fas fa-chevron-down arrow-icon', { 'expanded': systemInfoExpanded }]" class="text-gray-600 dark:text-gray-400"></i>
+                            </el-tooltip>
                         </div>
-                    </el-collapse-transition>
+                        <el-collapse-transition>
+                            <div v-show="systemInfoExpanded" class="mt-4">
+                                <p class="text-sm text-gray-600 dark:text-gray-300">转发规则数量: {{ systemInfo.total_forwardings }}</p>
+                                <div class="mt-2">
+                                    <p class="text-sm text-gray-600 dark:text-gray-300">CPU: {{ systemInfo.cpu_usage }}%</p>
+                                    <div class="progress-container">
+                                        <div class="progress-bar" :style="{ width: systemInfo.cpu_usage + '%' }">
+                                            <div class="bubble"></div><div class="bubble"></div><div class="bubble"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="mt-2">
+                                    <p class="text-sm text-gray-600 dark:text-gray-300">内存: {{ systemInfo.mem_usage }}%</p>
+                                    <div class="progress-container">
+                                        <div class="progress-bar" :style="{ width: systemInfo.mem_usage + '%' }">
+                                            <div class="bubble"></div><div class="bubble"></div><div class="bubble"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="mt-2">
+                                    <p class="text-sm text-gray-600 dark:text-gray-300">端口使用率: {{ systemInfo.port_usage }}%</p>
+                                    <div class="progress-container">
+                                        <div class="progress-bar" :style="{ width: systemInfo.port_usage + '%' }">
+                                            <div class="bubble"></div><div class="bubble"></div><div class="bubble"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <p class="text-sm text-gray-600 dark:text-gray-300 mt-2">允许端口范围: {{ portRangeText }}</p>
+                            </div>
+                        </el-collapse-transition>
+                    </div>
                 </div>
 
                 <div class="rules-section">
                     <div class="flex justify-between items-center mb-4">
                         <h3 class="text-xl font-semibold text-gray-800 dark:text-gray-200">端口转发规则</h3>
-                        <button class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 text-sm transition-all" @click="showAddDialog" :disabled="loading">
+                        <button class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 text-sm transition-all flex items-center gap-2" @click="showAddDialog" :disabled="loading">
                             <i class="fas fa-plus"></i> 新建规则
                         </button>
                     </div>
@@ -212,9 +381,15 @@
                     <div v-if="loading" class="animate-pulse space-y-4">
                         <div v-for="n in 3" :key="n" class="h-24 bg-gray-200 dark:bg-gray-600 rounded-md"></div>
                     </div>
-                    <div v-else-if="!rules.length" class="text-center text-gray-500 dark:text-gray-400 py-8">暂无规则</div>
-                    <div v-else class="space-y-4">
-                        <div v-for="rule in rules" :key="rule.id" class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md p-4 shadow-sm hover:shadow-lg transition-all duration-300 rule-item glass-effect">
+                    <div v-else-if="!rules.length" class="text-center text-gray-500 dark:text-gray-400 py-8">
+                        <i class="fas fa-inbox text-4xl mb-2"></i>
+                        <p>暂无端口转发规则</p>
+                        <button class="mt-4 bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-all" @click="showAddDialog">
+                            <i class="fas fa-plus mr-2"></i>添加新规则
+                        </button>
+                    </div>
+                    <div v-else class="space-y-4 max-h-[500px] overflow-y-auto pr-2">
+                        <div v-for="rule in rules" :key="rule.id" class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md p-4 shadow-sm hover:shadow-lg transition-all duration-300 rule-item glass-effect rule-card">
                             <div class="flex justify-between items-center cursor-pointer" @click="rule.isExpanded = !rule.isExpanded">
                                 <div class="flex items-center space-x-3">
                                     <span class="inline-block bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs font-bold px-2 py-1 rounded">
@@ -240,10 +415,19 @@
                                             </span>
                                         </div>
                                         <div class="flex space-x-2">
-                                            <button v-if="rule.status === 'running'" class="bg-yellow-500 text-white px-2 py-1 rounded-md hover:bg-yellow-600 text-xs transition-all" @click.stop="toggleRule(rule, 'stop')" :disabled="rule.loading"><i class="fas fa-stop"></i> {{ rule.loading ? '' : '停止' }}</button>
-                                            <button v-else class="bg-green-500 text-white px-2 py-1 rounded-md hover:bg-green-600 text-xs transition-all" @click.stop="toggleRule(rule, 'start')" :disabled="rule.loading"><i class="fas fa-play"></i> {{ rule.loading ? '' : '启动' }}</button>
+                                            <button v-if="rule.status === 'running'" class="bg-yellow-500 text-white px-2 py-1 rounded-md hover:bg-yellow-600 text-xs transition-all" @click.stop="toggleRule(rule, 'stop')" :disabled="rule.loading">
+                                                <i v-if="rule.loading" class="fas fa-spinner fa-spin"></i>
+                                                <i v-else class="fas fa-stop"></i> {{ rule.loading ? '处理中' : '停止' }}
+                                            </button>
+                                            <button v-else class="bg-green-500 text-white px-2 py-1 rounded-md hover:bg-green-600 text-xs transition-all" @click.stop="toggleRule(rule, 'start')" :disabled="rule.loading">
+                                                <i v-if="rule.loading" class="fas fa-spinner fa-spin"></i>
+                                                <i v-else class="fas fa-play"></i> {{ rule.loading ? '处理中' : '启动' }}
+                                            </button>
                                             <button class="bg-blue-500 text-white px-2 py-1 rounded-md hover:bg-blue-600 text-xs transition-all" @click.stop="showEditDialog(rule)"><i class="fas fa-edit"></i> 修改</button>
-                                            <button class="bg-red-500 text-white px-2 py-1 rounded-md hover:bg-red-600 text-xs transition-all" @click.stop="deleteRule(rule.id)" :disabled="rule.loading"><i class="fas fa-trash"></i> 删除</button>
+                                            <button class="bg-red-500 text-white px-2 py-1 rounded-md hover:bg-red-600 text-xs transition-all" @click.stop="deleteRule(rule.id)" :disabled="rule.loading">
+                                                <i v-if="rule.loading" class="fas fa-spinner fa-spin"></i>
+                                                <i v-else class="fas fa-trash"></i> {{ rule.loading ? '处理中' : '删除' }}
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
@@ -308,11 +492,14 @@
         const { createApp, ref } = Vue;
         const ElementPlus = window.ElementPlus;
 
-        function debounce(func, wait) {
+        // 防抖函数工厂
+        function createDebounce(wait) {
             let timeout;
-            return function (...args) {
-                clearTimeout(timeout);
-                timeout = setTimeout(() => func.apply(this, args), wait);
+            return function(fn) {
+                return function(...args) {
+                    clearTimeout(timeout);
+                    timeout = setTimeout(() => fn.apply(this, args), wait);
+                };
             };
         }
 
@@ -326,6 +513,7 @@
                         callback();
                     }
                 };
+                
                 return {
                     isDarkMode: false, // 默认白天模式
                     currentBackend: '',
@@ -349,11 +537,20 @@
                         port_usage: 0
                     },
                     formRules: {
-                        id: [{ required: true, message: '请输入规则ID', trigger: 'blur' }, { pattern: /^[\u4e00-\u9fa5\w-]+$/, message: 'ID只能包含中文、英文、数字、下划线或连字符', trigger: 'blur' }],
+                        id: [
+                            { required: true, message: '请输入规则ID', trigger: 'blur' }, 
+                            { pattern: /^[\u4e00-\u9fa5\w-]+$/, message: 'ID只能包含中文、英文、数字、下划线或连字符', trigger: 'blur' }
+                        ],
                         protocol: [{ required: true, message: '请选择协议', trigger: 'change' }],
-                        source_port: [{ required: true, message: '请输入本地端口', trigger: 'blur' }, { validator: validatePort, trigger: 'blur' }],
+                        source_port: [
+                            { required: true, message: '请输入本地端口', trigger: 'blur' }, 
+                            { validator: validatePort, trigger: 'blur' }
+                        ],
                         destination: [{ required: true, message: '请输入目标地址', trigger: 'blur' }],
-                        destination_port: [{ required: true, message: '请输入目标端口', trigger: 'blur' }, { type: 'number', min: 1, max: 65535, message: '端口必须在 1-65535 范围内', trigger: 'blur' }],
+                        destination_port: [
+                            { required: true, message: '请输入目标端口', trigger: 'blur' }, 
+                            { type: 'number', min: 1, max: 65535, message: '端口必须在 1-65535 范围内', trigger: 'blur' }
+                        ],
                         expire_minutes: [{ required: true, message: '请输入有效期', trigger: 'blur' }]
                     }
                 }
@@ -366,6 +563,8 @@
                 portRangeText() {
                     const allPorts = [...this.systemInfo.available_ports, ...this.systemInfo.used_ports];
                     if (allPorts.length === 0) return '未知';
+                    
+                    // 优化性能：避免多次遍历数组
                     const minPort = Math.min(...allPorts);
                     const maxPort = Math.max(...allPorts);
                     return `${minPort}-${maxPort}`;
@@ -374,11 +573,17 @@
                     return this.dialogMode === 'add' ? '添加新规则' : '修改规则';
                 }
             },
+            created() {
+                // 创建防抖函数
+                this.debouncedCheckFormPort = createDebounce(500)(this.checkFormPort);
+            },
             mounted() {
                 // 加载主题模式
                 const savedTheme = localStorage.getItem('preferredTheme');
-                this.isDarkMode = savedTheme ? savedTheme === 'dark' : false; // 默认白天模式
-                this.updateTheme(false); // 首次加载不刷新图片
+                this.isDarkMode = savedTheme ? savedTheme === 'dark' : false;
+                
+                // 应用主题
+                this.updateTheme();
 
                 // 加载后端
                 this.loadBackends();
@@ -388,11 +593,11 @@
                 }
             },
             methods: {
-                updateTheme(refreshImage = true) {
+                updateTheme() {
                     document.body.classList.toggle('dark', this.isDarkMode);
-                    if (refreshImage) {
-                         document.body.style.backgroundImage = `url('https://www.loliapi.com/acg?v=${Date.now()}')`;
-                    }
+                    
+                    // 刷新背景图（防止缓存）
+                    document.body.style.backgroundImage = `url('https://www.loliapi.com/acg?v=${Date.now()}')`;
                 },
                 toggleDarkMode() {
                     this.isDarkMode = !this.isDarkMode;
@@ -450,9 +655,9 @@
                     if (!port || port < 1 || port > 65535) return;
                     
                     try {
-                        const data = await this.apiFetch('/api/system');
+                        // 使用现有的系统信息，避免重复请求
                         const originalPort = this.dialogMode === 'edit' ? this.rules.find(r => r.id === this.currentRule.originalId)?.source_port : -1;
-                        const isAvailable = data.available_ports.includes(port) || port === originalPort;
+                        const isAvailable = this.systemInfo.available_ports.includes(port) || port === originalPort;
                         
                         this.portStatus = {
                             available: isAvailable,
@@ -462,7 +667,6 @@
                         this.portStatus = { available: false, message: '端口检查失败' };
                     }
                 },
-                debouncedCheckFormPort: debounce(function() { this.checkFormPort(); }, 500),
                 handlePortSelect() {
                     this.$nextTick(() => { this.checkFormPort(); });
                 },

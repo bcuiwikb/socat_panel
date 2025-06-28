@@ -1,42 +1,38 @@
-name: Build & Release
+name: Build
 
 on:
   push:
-    tags:
-      - 'v*.*.*'
-  workflow_dispatch:
-
-permissions:
-  contents: write
+    branches:
+      - main  # 或者你使用的分支名称
+  workflow_dispatch:  # 允许手动触发
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
-    steps:
-      - uses: actions/checkout@v3
+    runs-on: ubuntu-22.04  # 使用较旧的 Ubuntu 版本以兼容低版本服务器
 
-      - name: Setup Python 3.9
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: 3.9
+          python-version: 3.9  # 使用较旧的 Python 版本以兼容低版本服务器
 
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y gcc
-          pip install -r requirements.txt
-          pip install pyinstaller
+          sudo apt-get install -y gcc  # 安装编译器
+          pip install -r requirements.txt  # 安装项目依赖
+          pip install pyinstaller  # 安装 PyInstaller
 
-      - name: Build executable
-        run: pyinstaller --onefile --distpath dist main.py
+      - name: Build executable with PyInstaller
+        run: |
+          pyinstaller --onefile --distpath dist main.py
+          # main.py 是你的入口脚本文件名，根据实际情况修改
 
-      - name: Create Release
-        if: github.ref_type == 'tag'
-        uses: softprops/action-gh-release@v2
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
         with:
-          tag_name: ${{ github.ref_name }}
-          name: Release ${{ github.ref_name }}
-          generate_release_notes: true
-          files: dist/main
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          name: main
+          path: dist/
